@@ -1,0 +1,6 @@
+import os
+if os.name=='nt':
+    font_family='Malgun Gothic'
+else:
+    font_family='AppleGothic'
+sns.set(font=font_family,rc={'axes.unicode_minus':False})
