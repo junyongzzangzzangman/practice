@@ -1,0 +1,82 @@
+import requests
+import lxml.html
+import pandas as pd
+import sqlite3
+from pandas.io import sql
+import os
+import time
+from lxml.html import fromstring
+def db_save(NEWS_LIST):
+    with sqlite3.connect(os.path.join('.','sqliteDB')) as con:
+        try:
+            NEWS_LIST.to_sql(name='NEWS_LIST',con=con,index=False,if_exists='append')
+        except Exception as e:
+            print(str(e))
+        print(len(NEWS_LIST),'건 저장완료..')
+        print(df_list)
+def db_delete():
+    with sqlite3.connect(os.path.join('.','sqliteDB')) as con:
+        try:
+            cur=con.cursor()
+            sql='DELETE FROM NEWS_LIST'
+            cur.execute(sql)
+        except Exception as e:
+            print(str(e))
+def db_select():
+    with sqlite3.connect(os.path.join('.','sqliteDB')) as con:
+        try:
+            query='SELECT * FROM NEWS_LIST'
+            NEWS_LIST=pd.read_sql(query,con=con)
+        except Exception as e:
+            print(str(e))
+        return NEWS_LIST
+import re
+import string
+def get_detail(url):
+    body=[]
+    punc='[!"#$%&\'()*+,-./:;<=>?[\]^_`{|}~"" .]'
+    response=requests.get(url)
+    root=lxml.html.fromstring(response.content)
+    for p in root.xpath('//*[@id="harmonyContainer"]/section/p'):
+        if p.text:
+            body.append(re.sub(punc,'',p.text))
+    full_body=' '.join(body)
+    return full_body
+page=1
+max_page=0
+while(True):
+    df_list=[]
+    url = 'https://bigdata.gyeongnam.go.kr/index.gn?menuCd=DOM_000000114002000000'
+    response=requests.get(url)
+    root=lxml.html.fromstring(response.content)
+    res = requests.get(url)
+    p = fromstring(res.text)
+    li = p.xpath('//*[@id="sub-container"]/div[3]/div/div/div[2]/div[2]/div[2]/table/tbody')
+    li = li[0].xpath('.//tr')
+
+    links = []
+    for l in li:
+        hr_link = l.xpath('.//a[@href]')
+        a = l.xpath('.//a/strong')
+        link = hr_link[0].get('href')
+        a = a[0].text
+        df=pd.DataFrame({'TITLE':[a]})
+        df_list.append(df)
+    
+    if df_list:
+        df_10=pd.concat(df_list)
+        db_save(df_10)
+    for a in root.xpath('//*[@id="sub-container"]/div[3]/div/div/div[2]/div[2]/ul/li/a'): # 마지막 페이지 번호 가져오기
+        try:
+            num=int(a.xpath('span'))
+            if max_page<num:
+                max_page=num
+        except:
+            pass
+    span=root.xpath('//*[@id="sub-container"]/div[3]/div/div/div[2]/div[2]/ul/li[11]/a')
+    if (len(span)<=0) & (page>max_page): # 페이지 이동
+        break
+    else:
+        page=page+1
+    time.sleep(1)
+#db_delete()
