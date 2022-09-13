@@ -8,15 +8,17 @@ from selenium import webdriver
 
 options=webdriver.ChromeOptions()
 options.add_argument("--start-maximized"); # 브라우저가 작으면 UI가 바뀌므로 브라우저를 최대화하는 옵션 설정
+
+# 한 페이지에 10개의 자료 있으므로 10번 반복
 for i in range(10):
     browser=webdriver.Chrome(r'chromedriver.exe',options=options)
     browser.get('https://bigdata.gyeongnam.go.kr/index.gn?menuCd=DOM_000000114002000000')
     browser.find_element("xpath", '//*[@id="sub-container"]/div[3]/div/div/div[2]/div[2]/div[2]/table/tbody/tr[%d]/td[6]/span/a'%(i+1)).click()
-    if  'CSV' in browser.find_element("xpath", '//*[@id="f4"]/div/div/div/table/tbody/tr[1]/th/div').text:
+    if  'CSV' in browser.find_element("xpath", '//*[@id="f4"]/div/div/div/table/tbody/tr[1]/th/div').text: # 페이지에 첫번째 자료가 csv일 경우 그냥 csv 다운
         browser.find_element("xpath", '//*[@id="f4"]/div/div/div/table/tbody/tr[1]/td/div/a').click()
         browser.find_element("xpath", '//*[@id="dsUsePurpsCd4"]').click()
         browser.find_element("xpath", '//*[@id="frmDsUsePurp"]/div/div/div/div/a[1]').click()
-    else:
+    else: # 첫번째 자료가 csv가 아닌 다른 것(json)일 경우 밑의 자료(csv) 
         browser.find_element("xpath", '//*[@id="f4"]/div/div/div/table/tbody/tr[2]/td/div/a').click()
         browser.find_element("xpath", '//*[@id="dsUsePurpsCd4"]').click()
         browser.find_element("xpath", '//*[@id="frmDsUsePurp"]/div/div/div/div/a[1]').click()
