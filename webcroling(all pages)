@@ -1,0 +1,65 @@
+import pandas as pd
+from selenium import webdriver
+from bs4 import BeautifulSoup
+
+driver = webdriver.Chrome('chromedriver')
+driver.implicitly_wait(3)
+
+# 저장할 리스트 생성
+nums = []
+titles = []
+data_cates = []
+date11 = []
+date22 = []
+
+cnt = 0
+for i in range(0, 239):
+    url = "https://bigdata.gyeongnam.go.kr/index.gn?page={}&menuCd=DOM_000000114002000000&orderBy=&perPageNum=10&inputSearch=".format(i)
+    driver.get(url)
+
+    # 현재 페이지의 소스 추출 및 처리
+    html = driver.page_source
+    soup = BeautifulSoup(html, 'html.parser')
+
+    # 현재 페이지 내 게시글의 하이퍼링크 추출
+    #td = soup.find_all("td", {"title" : "strong"})
+    #href = [i.find("a")["href"] for i in td]
+
+    # 제목, 본문, 날짜 가져오기
+    title = soup.select("strong")
+    data_cate = soup.select("div.type")
+    date1 = soup.select("td.registration-date.f13")
+    date2 = soup.select("td.final-modification-date.f13")
+
+    # 텍스트만 추출
+    title_result = [i.text.strip() for i in title]
+    data_cate_result = [i.text.strip() for i in data_cate]
+    date1_result = [i.text.strip() for i in date1]
+    date2_result = [i.text.strip() for i in date2]
+        
+    # 게시글 번호
+    cnt += 1
+
+
+    # 자료 저장
+    nums.append(cnt)
+    titles += title_result
+    data_cates += data_cate_result
+    date11 += date1_result
+    date22 += date2_result
+    
+# 제목 확인
+print(titles)
+pd.DataFrame(titles).shape
+
+# 속성 확인
+data_cates
+
+# 가져온 데이터들 데이터프레임으로 변환
+df = pd.DataFrame({"제목":titles, "데이터유형":data_cates, "등록일":date11, "최종수정일":date22})
+
+# 데이터프레인 행 개수, 열 개수 확인
+df.shape
+
+# csv파일로 변환
+df.to_csv("공공데이터_박준용.csv", encoding = "utf-8-sig", index = False)
