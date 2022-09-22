@@ -1,0 +1,14 @@
+import lxml.html
+import os
+from lxml.html import fromstring
+import pandas as pd
+from selenium import webdriver
+from bs4 import BeautifulSoup
+
+juso=df['LTNO_ADDR'][122].replace(' ','+')
+url = f'https://www.juso.go.kr/support/AddressMainSearch.do?firstSort=none&ablYn=N&aotYn=N&fillterHiddenValue=&searchKeyword={juso}&dsgubuntext=&dscity1text=&dscounty1text=&dsemd1text=&dsri1text=&dssan1text=&dsrd_nm1text=&searchType=HSTRY&dssearchType1=road&dscity1=&dscounty1=&dsrd_nm_idx1=%EA%B0%80_%EB%82%98&dsrd_nm1=&dsma=&dssb=&dstown1=&dsri1=&dsbun1=&dsbun2=&dstown2=&dsbuilding1='
+res = requests.get(url)
+p = fromstring(res.text)
+li = p.xpath('//*[@id="list1"]/div[2]/span[2]')
+
+li[0].text.replace('\r','').replace('\t','').replace('\n','')
