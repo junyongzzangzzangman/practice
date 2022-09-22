@@ -1,0 +1,44 @@
+import json
+import requests
+import pandas as pd
+import numpy as np
+import warnings
+warnings.filterwarnings('ignore')
+import lxml.html
+import os
+from lxml.html import fromstring
+import pandas as pd
+from selenium import webdriver
+from bs4 import BeautifulSoup
+
+df=pd.read_csv('창원시_온실가스배출량2.csv',encoding='cp949')
+
+driver = webdriver.Chrome('chromedriver')
+driver.implicitly_wait(1)
+
+def getLatLng(addr):
+    url = 'https://dapi.kakao.com/v2/local/search/address.json?query=' + addr
+    headers = {"Authorization": "KakaoAK 073a393656181c6073880062d3507191"}
+    result = json.loads(str(requests.get(url, headers=headers).text))
+    match_first = result['documents'][0]['address']
+    return float(match_first['y']), float(match_first['x'])
+
+df['latitude']=0
+df['longitude']=0
+for i in range(len(df)):
+    try:
+        df['latitude'][i]=getLatLng(df['LTNO_ADDR'][i])[0]
+        df['longitude'][i]=getLatLng(df['LTNO_ADDR'][i])[1]
+        print(i)
+    except:
+        juso=df['LTNO_ADDR'][122].replace(' ','+')
+        url = f'https://www.juso.go.kr/support/AddressMainSearch.do?firstSort=none&ablYn=N&aotYn=N&fillterHiddenValue=&searchKeyword={juso}&dsgubuntext=&dscity1text=&dscounty1text=&dsemd1text=&dsri1text=&dssan1text=&dsrd_nm1text=&searchType=HSTRY&dssearchType1=road&dscity1=&dscounty1=&dsrd_nm_idx1=%EA%B0%80_%EB%82%98&dsrd_nm1=&dsma=&dssb=&dstown1=&dsri1=&dsbun1=&dsbun2=&dstown2=&dsbuilding1='
+        res = requests.get(url)
+        p = fromstring(res.text)
+        li = p.xpath('//*[@id="list1"]/div[2]/span[2]')
+        df['LTNO_ADDR'][i]=li[0].text.replace('\r','').replace('\t','').replace('\n','')
+        df['latitude'][i]=getLatLng(df['LTNO_ADDR'][i])[0]
+        df['longitude'][i]=getLatLng(df['LTNO_ADDR'][i])[1]
+        print(i)
+
+df
