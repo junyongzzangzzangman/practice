@@ -1,0 +1,42 @@
+# 시군구별로 분리
+# 각 시군구의 코드를 리스트로 생성
+cd_list=[48121,48123,48125,48127,48129,48170,48220,48240,48250,48270,48310,
+         48330,48720,48730,48740,48820,48840,48850,48860,48870,48880,48890]
+# 각 시군구의 이름을 리스트로 생성
+nm_list=df18['시군구 구분'].unique()
+# 각 시군구의 코드와 이름을 코드:이름의 딕셔너리로 생성
+cd_nm_list={cd:nm for cd,nm in zip(cd_list,nm_list)}
+# 시군구의 이름에 띄어쓰기가 된 부분을 '_'로 변경(각 시군구 이름이 포함된 데이터프레임 이름이 잘 생성되도록)
+for i in nm_list:
+    i=i.replace(' ','_')
+    globals()['df_{}'.format(i)]=pd.DataFrame()
+    
+# 8자리 읍면동 코드를 1000으로 나누어 시도 코드만 뽑아 시도별로 분리
+for j in range(3137303,len(df)):
+    for i in cd_nm_list:
+        if df.iloc[j]['admdong_cd']//1000==i:
+            globals()['df_{}'.format(cd_nm_list[i].replace(' ','_'))]=globals()['df_{}'.format(cd_nm_list[i].replace(' ','_'))].append(df.iloc[j])
+    print(j)
+    
+df_창원시_의창구.to_csv('창원시 의창구 생활인구2.csv',encoding='cp949')
+df_창원시_성산구.to_csv('창원시 성산구 생활인구2.csv',encoding='cp949')
+df_창원시_마산합포구.to_csv('창원시 마산합포구 생활인구2.csv',encoding='cp949')
+df_창원시_마산회원구.to_csv('창원시 마산회원구 생활인구2.csv',encoding='cp949')
+df_창원시_진해구.to_csv('창원시 진해구 생활인구2.csv',encoding='cp949')
+df_진주시.to_csv('진주시 생활인구2.csv',encoding='cp949')
+df_통영시.to_csv('통영시 생활인구2.csv',encoding='cp949')
+df_사천시.to_csv('사천시 생활인구2.csv',encoding='cp949')
+df_김해시.to_csv('김해시 생활인구2.csv',encoding='cp949')
+df_밀양시.to_csv('밀양시 생활인구2.csv',encoding='cp949')
+df_거제시.to_csv('거제시 생활인구2.csv',encoding='cp949')
+df_양산시.to_csv('양산시 생활인구2.csv',encoding='cp949')
+df_의령군.to_csv('의령군 생활인구2.csv',encoding='cp949')
+df_함안군.to_csv('함안군 생활인구2.csv',encoding='cp949')
+df_창녕군.to_csv('창녕군 생활인구2.csv',encoding='cp949')
+df_고성군.to_csv('고성군 생활인구2.csv',encoding='cp949')
+df_남해군.to_csv('남해군 생활인구2.csv',encoding='cp949')
+df_하동군.to_csv('하동군 생활인구2.csv',encoding='cp949')
+df_산청군.to_csv('산청군 생활인구2.csv',encoding='cp949')
+df_함양군.to_csv('함양군 생활인구2.csv',encoding='cp949')
+df_거창군.to_csv('거창군 생활인구2.csv',encoding='cp949')
+df_합천군.to_csv('합천군 생활인구2.csv',encoding='cp949')
