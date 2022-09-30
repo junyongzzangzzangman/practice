@@ -1,0 +1,123 @@
+import pandas as pd
+import os
+
+# 데이터 구분
+KT_LIVING = "생활인구"
+KT_IN_FLOW = "동단위유입"
+KT_OUT_FLOW = "동단위유출"
+
+# 소스 엑셀 컬럼명
+LIVING_LABEL = ["base_date", "timezn_cd", "admdong_cd", "m10", "m15", "m20", "m25", "m30", "m35", "m40", "m45", "m50", "m55", "m60", "m65", "m70", "m75", "f10", "f15", "f20", "f25", "f30", "f35", "f40", "f45", "f50", "f55", "f60", "f65", "f70", "f75"]
+IN_FLOW_LABEL = ["base_date", "adm_cd", "rsdn_adm_cd", "m10", "m15", "m20", "m25", "m30", "m35", "m40", "m45", "m50", "m55", "m60", "m65", "m70", "m75", "f10", "f15", "f20", "f25", "f30", "f35", "f40", "f45", "f50", "f55", "f60", "f65", "f70", "f75"]
+OUT_FLOW_LABEL = ["base_date", "rsdn_adm_cd", "adm_cd", "m10", "m15", "m20", "m25", "m30", "m35", "m40", "m45", "m50", "m55", "m60", "m65", "m70", "m75", "f10", "f15", "f20", "f25", "f30", "f35", "f40", "f45", "f50", "f55", "f60", "f65", "f70", "f75"]
+
+LIVING_ADM_LABEL = "admdong_cd" # 생활인구  지역 코드
+FLOW_ADM_LABEL = "adm_cd" # 유입/유출 지역 코드
+FLOW_RSDN_LABEL = "rsdn_adm_cd"  # 유입/유출 발생 지역 코드
+
+# 폴더명(년도)
+PATH_YEARS = ["2018", "2019", "2020", "2021", "2022"]
+
+# 소스 데이터 파일 위치 경로
+SRC_AREA_CODE = os.path.join(os.getcwd(), "src", "00. 경남지역코드_최종.xlsx")
+SRC_DATA_PATH = os.path.join(os.getcwd(), "src")
+OUT_DATA_PATH = os.path.join(os.getcwd(), "out")
+
+# 01. 행정동 코드 >>> 한글명 : 추가
+def setAdmKrName(_theme_dir,_theme, _file, _label):
+    df=pd.read_csv(os.path.join(_theme_dir,_file))
+    region_cd=pd.read_excel(SRC_AREA_CODE)
+    df=df.join(region_cd.set_index('읍면동')['시군구 구분'],on=_label)
+    df=df.join(region_cd.set_index('읍면동')['읍면동 구분'],on=_label)
+    print("행정동(한) 추가 : ", _theme, _label)
+    return df
+
+# 02. 유입/유출 지역 코드 >>> 한글명 : 추가
+def setFlowKrName(df, _theme, _label):
+    region_cd=pd.read_excel(SRC_AREA_CODE,sheet_name=None)['01. 유입유출코드_거주지']
+    df=df.join(region_cd.set_index('거주지코드')['거주지명'],on=_label)
+    print("유입_유출 전국_지역(한) 추가 : ", _theme, _label)
+    return df
+
+# 03. 5세 단위 >>> 10세 단위 : 변환
+def setAge10Conversion(df):
+    df['남10대']=df['m10']+df['m15']
+    df['남20대']=df['m20']+df['m25']
+    df['남30대']=df['m30']+df['m35']
+    df['남40대']=df['m40']+df['m45']
+    df['남50대']=df['m50']+df['m55']
+    df['남60대']=df['m60']+df['m65']
+    df['남70대이상']=df['m70']+df['m75']
+    df['여10대']=df['f10']+df['f15']
+    df['여20대']=df['f20']+df['f25']
+    df['여30대']=df['f30']+df['f35']
+    df['여40대']=df['f40']+df['f45']
+    df['여50대']=df['f50']+df['f55']
+    df['여60대']=df['f60']+df['f65']
+    df['여70대이상']=df['f70']+df['f75']
+    df.drop(columns=df.loc[:,'m10':'f75'],inplace=True)
+    print("10세 단위로 변환")
+    return df
+
+### 전처리 
+# 경로 탐색
+def preProcessKT(_theme):
+### 01. 행정동 코드 >>> 한글명 : 추가
+### 02. 유입/유출 지역 코드 >>> 한글명 : 추가
+### 03. 5세 단위 >>> 10세 단위 : 변환
+### 04. 전처리 파일 : 저장
+    if(_theme==KT_LIVING):      # 생활인구 행정동(한) 변환
+        theme_dir=os.path.join(SRC_DATA_PATH,KT_LIVING)
+        for yyyy in PATH_YEARS: # 1년씩(폴더마다) 반복
+            dir_year = os.path.join(theme_dir,yyyy)   # c:\WorkSpace\Python\01_KT_Data\src\생활인구\2018
+            file_list = os.listdir(dir_year)
+            for file in file_list:
+                df=setAdmKrName(dir_year,_theme, file, LIVING_LABEL[2])
+                df=setAge10Conversion(df)
+                df.to_csv(os.path.join(OUT_DATA_PATH,file),encoding='cp949',index=False)
+    
+    elif(_theme==KT_IN_FLOW):   # 유입인구 행정동(한), 유입지역(한) 변환
+        theme_dir=os.path.join(SRC_DATA_PATH,'유입인구',KT_IN_FLOW)
+        for yyyy in PATH_YEARS: # 1년씩(폴더마다) 반복
+            dir_year = os.path.join(theme_dir,yyyy)   # c:\WorkSpace\Python\01_KT_Data\src\생활인구\2018
+            file_list = os.listdir(dir_year)
+            for file in file_list:
+                df=setAdmKrName(dir_year,_theme, file, IN_FLOW_LABEL[1])
+                df=setFlowKrName(df, _theme, IN_FLOW_LABEL[2])
+                df=setAge10Conversion(df)
+                df.to_csv(os.path.join(OUT_DATA_PATH,file),encoding='cp949',index=False)
+    
+    elif(_theme==KT_OUT_FLOW):  # 유출인구 행정동(한), 유입지역(한) 변환
+        theme_dir=os.path.join(SRC_DATA_PATH,'유출인구',KT_OUT_FLOW)
+        for yyyy in PATH_YEARS: # 1년씩(폴더마다) 반복
+            dir_year = os.path.join(theme_dir,yyyy)   # c:\WorkSpace\Python\01_KT_Data\src\생활인구\2018
+            file_list = os.listdir(dir_year)
+            for file in file_list:
+                df=setAdmKrName(dir_year,_theme, file, OUT_FLOW_LABEL[1])
+                df=setFlowKrName(df, _theme, OUT_FLOW_LABEL[2])
+                df=setAge10Conversion(df)
+                df.to_csv(os.path.join(OUT_DATA_PATH,file),encoding='cp949',index=False)
+
+
+# KT_LIVING = "생활인구"
+# KT_IN_FLOW = "동단위유입"
+# KT_OUT_FLOW = "동단위유출"
+preProcessKT(KT_IN_FLOW)
+
+
+### 04. 코드 보정 >>> 구(개편)지역 : 수치 통합
+
+### 05. 1년간 데이터 통합
+
+
+### 폴더 구조
+# /src/                             # 소스 데이터 폴더
+# /src/동단위유입/2018              # src/테마명/YYYY
+# /src/00. 경남지역코드_최종.xlsx
+# /out/                             # 전처리 결과 데이터 폴더
+# /out/동단위유입/2018              # out/테마명/YYYY
+
+### 컬럼 라벨 정리
+# 생활 인구 : 날짜, 시간,       지역명(한), 10세 단위 Data
+# 유     입 : 날짜, 지역명(한), 유입지(한), 10세 단위 Data
+# 유     입 : 날짜, 지역명(한), 유출지(한), 10세 단위 Data
